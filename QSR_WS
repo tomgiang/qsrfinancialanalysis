@@ -1,0 +1,85 @@
+from bs4 import BeautifulSoup
+import pandas as pd
+import requests
+
+def makeSoup(url):
+    url = "https://www.qsrmagazine.com/content/top-50-fast-food-chains-2021"
+    page = requests.get(URL)
+    soup = BeautifulSoup(page.content, "html.parser")
+    results = soup.find(id="slick-node-qsr-slideshow-structured-content-full-159921-1-slider")
+    rawData = results.find_all("div", class_="clearfix text-formatted field field--name-field-slide-text field--type-text-long field--label-hidden field__item") [1:51]
+    return rawData
+
+URL = "https://www.qsrmagazine.com/content/top-50-fast-food-chains-2021"
+fullData = makeSoup(URL)
+
+compName = []
+estimate = []
+sales = []
+avgSales = []
+franStores = []
+compStores = []
+totalUnits = []
+change = []
+
+def removeAsterick(input):
+    if "*" in input:
+        return input[:-1]
+    else:
+        return input
+
+def isitanEstimate(input):
+    if "*" in input:
+        return "Yes"
+    else:
+        return "No"
+
+for company in fullData:
+    text = company.find_all("p")[0].get_text()
+    data = text[3:]
+    estData = isitanEstimate(data)
+    estimate.append(estData)
+    data = removeAsterick(text[3:])
+    compName.append(data)
+
+    text = company.find_all("p")[1].get_text()
+    data = int(text[35:].replace(",", ""))
+    sales.append(data)
+
+    text = company.find_all("p")[2].get_text()
+    data = int(text[37:].replace(",", ""))
+    avgSales.append(data)
+
+    text = company.find_all("p")[3].get_text()
+    data = int(text[19:].replace(",", ""))
+    franStores.append(data)
+
+    text = company.find_all("p")[4].get_text()
+    data = int(text[16:].replace(",", ""))
+    compStores.append(data)
+
+    text = company.find_all("p")[5].get_text()
+    data = int(text[18:].replace(",", ""))
+    totalUnits.append(data)
+
+    text = company.find_all("p")[6].get_text()
+    data = int(text[33:].replace(",", "").replace("–", "-"))
+    change.append(data)
+
+
+Top50 = {"compName": compName, 
+         "estimate": estimate, 
+         "sales": sales, 
+         "avgSales": avgSales, 
+         "franStores": franStores, 
+         "compStores": compStores, 
+         "totalUnits":totalUnits, 
+         "change": change}
+
+Top50_df = pd.DataFrame(Top50)
+
+#Make csv file from dataframe
+#Top50_df.to_csv("Top50_df.csv", index=False)
+
+#Get dataframe with only estimate values
+#Top50_df_filtered = Top50_df [Top50_df['estimate'] == "No" ]
